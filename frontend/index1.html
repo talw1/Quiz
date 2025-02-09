@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input, button { margin: 5px; padding: 10px; font-size: 16px; }
+        #answer-section { display: none; }
+    </style>
+    <script>
+        async function fetchQuiz() {
+            const quizId = document.getElementById("quiz-id").value;
+            if (!quizId) {
+                alert("Please enter a Quiz ID.");
+                return;
+            }
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+                    credentials: 'include' // Ensure cookies are sent with the request
+                });
+                if (!response.ok) throw new Error("Failed to fetch quiz.");
+                const data = await response.json();
+                document.getElementById("quiz-question").innerText = data.question || "No question available";
+                document.getElementById("hidden-quiz-id").value = quizId; // Store quiz ID
+                document.getElementById("answer-section").style.display = "block";
+            } catch (error) {
+                alert("Error fetching quiz: " + error.message);
+            }
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById("quiz-answer").value;
+            if (!answer) {
+                alert("Please enter an answer.");
+                return;
+            }
+            const payload = JSON.stringify({ "answer": answer });
+            console.log("Sending payload:", payload); // Debugging
+            try {
+                const response = await fetch("http://127.0.0.1:8000/quizzes/submit/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: payload,
+                    credentials: 'include' // Ensure cookies are sent with the request
+                });
+                const responseData = await response.json();
+                console.log("Server response:", responseData); // Debugging
+                document.getElementById("result").innerText = responseData.message || responseData.error;
+            } catch (error) {
+                console.error("Error submitting answer:", error);
+                alert("Error submitting answer: " + error.message);
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Quiz App1</h1>
+    <label for="quiz-id">Enter Quiz ID:</label>
+    <input type="number" id="quiz-id">
+    <button onclick="fetchQuiz()">Get Quiz</button>
+    <h2 id="quiz-question"></h2>
+    <div id="answer-section">
+        <input type="hidden" id="hidden-quiz-id"> <!-- Store quiz ID -->
+        <label for="quiz-answer">Your Answer:</label>
+        <input type="text" id="quiz-answer">
+        <button onclick="submitAnswer()">Submit Answer</button>
+    </div>
+    <p id="result"></p>
+</body>
+</html>
